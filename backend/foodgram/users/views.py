@@ -1,17 +1,16 @@
-from django.db import IntegrityError
+from django.contrib.auth.models import AnonymousUser
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
-
 from .models import User
-
-from .permissions import AdminPermission
-from .serializers import UserSerializer, UserGetSerializer, LoginSerializer, SetPasswordSerializer
+from .serializers import (LoginSerializer, SetPasswordSerializer,
+                          UserGetSerializer, UserSerializer)
 
 
 @api_view(['POST'])
@@ -24,24 +23,45 @@ def login(request):
         email = serializer.validated_data['email']
         password = serializer.validated_data['password']
         user = get_object_or_404(User, email=email)
-        if user.password == password:
-            refresh = RefreshToken.for_user(user)
-            return Response({"auth_token": f'{str(refresh.access_token)}'},
-                            status=status.HTTP_201_CREATED
-                            )
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if user.password != password:
+            raise ValidationError('Пароль указан не верно!')
+        refresh = RefreshToken.for_user(user)
+        return Response({"auth_token": f'{str(refresh.access_token)}'},
+                        status=status.HTTP_201_CREATED
+                        )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout(request):
+    """Функция удаления JWT токена."""
 
-class UserViewSet(viewsets.ModelViewSet):
+    user = request.user
+    user.is_anonymous()
+    user.save()
+    return Response('Токен удален!')
+
+
+
+
+class ListRetrieveCreateViewSet(mixins.CreateModelMixin,
+                                mixins.ListModelMixin,
+                                mixins.RetrieveModelMixin,
+                                viewsets.GenericViewSet):
+    """Миксин для модели User."""
+
+    pass
+
+
+class UserViewSet(ListRetrieveCreateViewSet):
     """Функция выдачи списка пользователей, конкретного пользователя
     и регистрации пользователя."""
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
     pagination_class = PageNumberPagination
+
     # lookup_field = 'id'
     # filter_backends = (filters.SearchFilter, )
     # search_fields = ('id',)
@@ -55,14 +75,13 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return UserSerializer
 
-
     @action(
         detail=False,
         methods=['get'],
         url_path='me',
         url_name='me',
         serializer_class=UserGetSerializer,
-        permission_classes=(IsAuthenticated, )
+        permission_classes=(IsAuthenticated,)
     )
     def me(self, request):
         """Получение данных пользователя."""
@@ -76,8 +95,8 @@ class UserViewSet(viewsets.ModelViewSet):
         methods=['post'],
         url_path='set_password',
         url_name='set_password',
-        serializer_class=SetPasswordSerializer,
-        permission_classes=(IsAuthenticated, )
+        serializer_class=UserSerializer,
+        permission_classes=(IsAuthenticated,)
     )
     def set_password(self, request):
         """Изменение пароля пользователя."""
@@ -85,12 +104,13 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = SetPasswordSerializer(data=request.data)
         user = request.user
         if serializer.is_valid():
-            current_password = serializer.validated_data['current_password']
             new_password = serializer.validated_data['new_password']
-            if user.password == current_password:
-                user.password = new_password
-                user.save()
+            current_password = serializer.validated_data['current_password']
+            if user.password != current_password:
+                raise ValidationError('Текущий пароль указан не верно!')
+            user.password = new_password
+            user.save()
+            return Response('Пароль успешно изменен!',
+                            status=status.HTTP_204_NO_CONTENT)
 
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
