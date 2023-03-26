@@ -67,7 +67,7 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         'изображение',
-        upload_to='recipes',  # Тут нужно понять...
+        upload_to='recipes/images/',
         help_text='добавьте изображение рецепта'
     )
     text = models.TextField(
@@ -98,8 +98,17 @@ class Recipe(models.Model):
 
 
 class RecipeIngredient(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='recipeingredient'
+    )
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        related_name='recipeingredient'
+    )
+    amount = models.IntegerField(validators=[MinValueValidator(1)])
 
     def __repr__(self):
         return f'{self.recipe} {self.ingredient}'

@@ -2,12 +2,19 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import viewsets
 
-from .models import Ingredient, Tag
-from .serializers import IngredientSerializer, TagSerializer
+from .models import Ingredient, Tag, Recipe
+from .serializers import IngredientSerializer, TagSerializer, RecipeGetSerializer, RecipePostPatchDelSerializer
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
-    pass
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeGetSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return RecipeGetSerializer
+
+        return RecipePostPatchDelSerializer
 
 
 class TagsViewSet(viewsets.ModelViewSet):
