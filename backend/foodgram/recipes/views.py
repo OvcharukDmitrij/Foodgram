@@ -8,7 +8,6 @@ from .serializers import IngredientSerializer, TagSerializer, RecipeGetSerialize
 
 class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeGetSerializer
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'retrieve':

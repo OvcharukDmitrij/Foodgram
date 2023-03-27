@@ -1,9 +1,9 @@
-from rest_framework import serializers
 import base64
+
 from django.core.files.base import ContentFile
+from rest_framework import serializers
+
 from users.serializers import CustomUserSerializer
-
-
 from .models import Ingredient, Tag, Recipe, RecipeTag, RecipeIngredient
 
 
@@ -13,7 +13,8 @@ class RecipeIngredientGetSerializer(serializers.ModelSerializer):
 
     id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
-    measurement_unit = serializers.ReadOnlyField(source='ingredient.measurement_unit')
+    measurement_unit = serializers.ReadOnlyField(
+        source='ingredient.measurement_unit')
 
     class Meta:
         model = RecipeIngredient
@@ -63,7 +64,6 @@ class Base64ImageField(serializers.ImageField):
 class RecipeGetSerializer(serializers.ModelSerializer):
     """Сериализатор получения рецептов."""
 
-#    ingredients = RecipeIngredientSerializer(many=True)
     ingredients = serializers.SerializerMethodField()
     tags = TagSerializer(many=True)
     author = CustomUserSerializer()
@@ -83,7 +83,10 @@ class RecipeGetSerializer(serializers.ModelSerializer):
 class RecipePostPatchDelSerializer(serializers.ModelSerializer):
     """Сериализатор для создания, изменения и удаления рецептов."""
 
-    ingredients = RecipeIngredientPostSerializer(source='recipeingredient', many=True)
+    ingredients = RecipeIngredientPostSerializer(
+        source='recipeingredient',
+        many=True,
+    )
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Tag.objects.all()
@@ -99,7 +102,6 @@ class RecipePostPatchDelSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
-        print(validated_data)
 
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('recipeingredient')
@@ -118,3 +120,34 @@ class RecipePostPatchDelSerializer(serializers.ModelSerializer):
             RecipeTag.objects.create(tag=tag, recipe=recipe)
 
         return recipe
+
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.image = validated_data.get('image', instance.image)
+        instance.text = validated_data.get('text', instance.text)
+        instance.cooking_time = validated_data.get(
+            'cooking_time',
+            instance.cooking_time
+        )
+        RecipeIngredient.objects.filter(recipe=instance).delete()
+        RecipeTag.objects.filter(recipe=instance).delete()
+        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('recipeingredient')
+        for ingredient in ingredients:
+            current_ingredient, status = Ingredient.objects.get_or_create(
+                id=ingredient['id']
+            )
+            RecipeIngredient.objects.create(
+                ingredient=current_ingredient,
+                recipe=instance,
+                amount=ingredient['amount']
+            )
+        for tag in tags:
+            RecipeTag.objects.create(tag=tag, recipe=instance)
+
+        return instance
+
+    def to_representation(self, instance):
+        return RecipeGetSerializer(instance, context={
+            'request': self.context.get('request')
+        }).data
