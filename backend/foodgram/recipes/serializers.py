@@ -8,8 +8,7 @@ from .models import Ingredient, Tag, Recipe, RecipeTag, RecipeIngredient
 
 
 class RecipeIngredientGetSerializer(serializers.ModelSerializer):
-    """Сериализатор для предоставления данных об ингредиентах и их количества
-    в рецепте."""
+    """Получение данных об ингредиентах и их количестве в рецепте."""
 
     id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
@@ -22,8 +21,7 @@ class RecipeIngredientGetSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientPostSerializer(serializers.ModelSerializer):
-    """Сериализатор для добавления ингредиентов и их количества при
-     создании рецепта."""
+    """Добавление ингредиентов и их количество при создании рецепта."""
 
     id = serializers.IntegerField()
     amount = serializers.IntegerField()
@@ -34,7 +32,7 @@ class RecipeIngredientPostSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    """Сериализатор для предоставления данных об ингредиентах."""
+    """Получение данных об ингредиентах."""
 
     class Meta:
         model = Ingredient
@@ -42,7 +40,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
-    """Сериализатор для предоставления данных о тегах."""
+    """Получение данных о тегах."""
 
     class Meta:
         model = Tag
@@ -50,7 +48,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class Base64ImageField(serializers.ImageField):
-    """Сериализатор для декодирования картинки рецепта."""
+    """Декодирование картинки рецепта."""
 
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
@@ -62,7 +60,7 @@ class Base64ImageField(serializers.ImageField):
 
 
 class RecipeGetSerializer(serializers.ModelSerializer):
-    """Сериализатор получения рецептов."""
+    """Получение рецептов."""
 
     ingredients = serializers.SerializerMethodField()
     tags = TagSerializer(many=True)
@@ -81,7 +79,7 @@ class RecipeGetSerializer(serializers.ModelSerializer):
 
 
 class RecipePostPatchDelSerializer(serializers.ModelSerializer):
-    """Сериализатор для создания, изменения и удаления рецептов."""
+    """Создание, изменение и удаление рецептов."""
 
     ingredients = RecipeIngredientPostSerializer(
         source='recipeingredient',
@@ -148,6 +146,4 @@ class RecipePostPatchDelSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, instance):
-        return RecipeGetSerializer(instance, context={
-            'request': self.context.get('request')
-        }).data
+        return RecipeGetSerializer(instance).data

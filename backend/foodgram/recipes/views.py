@@ -3,10 +3,13 @@ from rest_framework import filters
 from rest_framework import viewsets
 
 from .models import Ingredient, Tag, Recipe
-from .serializers import IngredientSerializer, TagSerializer, RecipeGetSerializer, RecipePostPatchDelSerializer
+from .serializers import (IngredientSerializer, TagSerializer,
+                          RecipeGetSerializer, RecipePostPatchDelSerializer)
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
+    """Рецепты."""
+
     queryset = Recipe.objects.all()
 
     def get_serializer_class(self):
@@ -17,12 +20,16 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 
 class TagsViewSet(viewsets.ModelViewSet):
+    """Теги."""
+
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
 
 
 class IngredientsViewSet(viewsets.ModelViewSet):
+    """Ингредиенты."""
+
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
