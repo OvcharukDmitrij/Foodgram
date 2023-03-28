@@ -4,7 +4,8 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from users.serializers import CustomUserSerializer
-from .models import Ingredient, Tag, Recipe, RecipeTag, RecipeIngredient
+from .models import (Ingredient, Tag, Recipe,
+                     RecipeTag, RecipeIngredient, RecipeFavorite)
 
 
 class RecipeIngredientGetSerializer(serializers.ModelSerializer):
@@ -147,3 +148,22 @@ class RecipePostPatchDelSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return RecipeGetSerializer(instance).data
+
+
+class RecipeFavoriteSerializer(serializers.ModelSerializer):
+    """Вспомогательный сериализатор для сериализатора FavoriteSerializer."""
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time',)
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    """Добавление пользователем рецепта в избранное."""
+
+    class Meta:
+        model = RecipeFavorite
+        fields = ('user', 'favorite_recipe',)
+
+    def to_representation(self, instance):
+        return RecipeFavoriteSerializer(instance.favorite_recipe).data

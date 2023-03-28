@@ -1,10 +1,14 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters
+from rest_framework import filters, status
 from rest_framework import viewsets
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import Ingredient, Tag, Recipe
+from .models import Ingredient, Tag, Recipe, RecipeFavorite
 from .serializers import (IngredientSerializer, TagSerializer,
-                          RecipeGetSerializer, RecipePostPatchDelSerializer)
+                          RecipeGetSerializer, RecipePostPatchDelSerializer,
+                          FavoriteSerializer)
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
@@ -38,9 +42,49 @@ class IngredientsViewSet(viewsets.ModelViewSet):
     search_fields = ('^name',)
 
 
-class FavoritViewSet:
-    pass
+class FavoriteView(APIView):
+    """Избранное."""
+
+    def post(self, request, id):
+
+        user = request.user
+
+        data = {
+            'favorite_recipe': id,
+            'user': user.id
+        }
+
+        if RecipeFavorite.objects.filter(
+                favorite_recipe=id, user=user
+        ).exists():
+            raise ValidationError('Рецепт уже добавлен в избранное!')
+
+        serializer = FavoriteSerializer(data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        user = request.user
+
+        if not RecipeFavorite.objects.filter(
+                favorite_recipe=id, user=user
+        ).exists():
+            raise ValidationError(
+                'Этот рецепт не входит в Ваш список избранного!'
+            )
+
+        subscribe = RecipeFavorite.objects.filter(
+            favorite_recipe=id, user=user
+        )
+        subscribe.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ShopCartViewSet:
+class ShopCartView(APIView):
     pass

@@ -130,3 +130,21 @@ class RecipeTag(models.Model):
 
     def __repr__(self):
         return f'{self.recipe} {self.tag}'
+
+
+class RecipeFavorite(models.Model):
+    """Модель многие-ко-многим ИзбранныйРецепт-Пользователь."""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='favorite'
+    )
+    favorite_recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorite'
+    )
+
+    def __repr__(self):
+        return f'{self.user} {self.favorite_recipe}'
