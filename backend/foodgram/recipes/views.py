@@ -1,11 +1,16 @@
+from django.db.models import Sum
+from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import (IsAuthenticated, IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Ingredient, Tag, Recipe, RecipeFavorite, ShoppingCart
+from .models import (Ingredient, Tag, Recipe, RecipeFavorite,
+                     ShoppingCart, RecipeIngredient)
 from .serializers import (IngredientSerializer, TagSerializer,
                           RecipeGetSerializer, RecipePostPatchDelSerializer,
                           FavoriteSerializer, ShoppingCartSerializer)
@@ -21,6 +26,39 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return RecipeGetSerializer
 
         return RecipePostPatchDelSerializer
+
+    @action(
+        detail=False,
+        methods=['get'],
+        serializer_class=RecipeGetSerializer,
+        permission_classes=(IsAuthenticated,)
+    )
+    def download_shopping_cart(self, request):
+        """Загрузка списка покупок."""
+
+        user = request.user
+        ingredient_list = "Cписок покупок: "
+
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__shopping_cart__user=user).values(
+            'ingredient__name', 'ingredient__measurement_unit').annotate(
+            amount=Sum('amount'))
+
+        for num, i in enumerate(ingredients):
+            ingredient_list += (
+                f"\n{i['ingredient__name']} - {i['amount']} "
+                f"{i['ingredient__measurement_unit']}"
+            )
+            if num < ingredients.count() - 1:
+                ingredient_list += ', '
+
+        response = HttpResponse(
+            ingredient_list, 'Content-Type: application/pdf'
+        )
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_list.pdf'
+        )
+        return response
 
 
 class TagsViewSet(viewsets.ModelViewSet):
@@ -84,13 +122,6 @@ class FavoriteView(APIView):
         subscribe.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class DownloadShopCartView(APIView):
-    """Скачивание списка ингредиентов из рецепта, добавленного
-    в список покупок."""
-
-
 
 
 class ShoppingCartView(APIView):

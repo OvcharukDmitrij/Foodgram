@@ -66,17 +66,37 @@ class RecipeGetSerializer(serializers.ModelSerializer):
     ingredients = serializers.SerializerMethodField()
     tags = TagSerializer(many=True)
     author = CustomUserSerializer()
+    is_favorited = serializers.SerializerMethodField(read_only=True)
+    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Recipe
         fields = (
-            'id', 'tags', 'author', 'ingredients',
-            'name', 'image', 'text', 'cooking_time'
+            'id', 'tags', 'author', 'ingredients', 'is_favorited',
+            'is_in_shopping_cart', 'name', 'image', 'text', 'cooking_time'
         )
 
     def get_ingredients(self, obj):
+
         ingredients = RecipeIngredient.objects.filter(recipe=obj)
+
         return RecipeIngredientGetSerializer(ingredients, many=True).data
+
+    def get_is_favorited(self, obj):
+
+        request = self.context.get('request')
+
+        return RecipeFavorite.objects.filter(
+            favorite_recipe=obj, user=request.user
+        ).exists()
+
+    def get_is_in_shopping_cart(self, obj):
+
+        request = self.context.get('request')
+
+        return ShoppingCart.objects.filter(
+            recipe_buy=obj, user=request.user
+        ).exists()
 
 
 class RecipePostPatchDelSerializer(serializers.ModelSerializer):
@@ -106,6 +126,7 @@ class RecipePostPatchDelSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('recipeingredient')
         author = self.context.get('request').user
         recipe = Recipe.objects.create(author=author, **validated_data)
+
         for ingredient in ingredients:
             current_ingredient, status = Ingredient.objects.get_or_create(
                 id=ingredient['id']
@@ -113,8 +134,9 @@ class RecipePostPatchDelSerializer(serializers.ModelSerializer):
             RecipeIngredient.objects.create(
                 ingredient=current_ingredient,
                 recipe=recipe,
-                amount=ingredient['amount']
+                amount=ingredient['amount'],
             )
+
         for tag in tags:
             RecipeTag.objects.create(tag=tag, recipe=recipe)
 
