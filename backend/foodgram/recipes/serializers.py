@@ -4,8 +4,8 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from users.serializers import CustomUserSerializer
-from .models import (Ingredient, Tag, Recipe,
-                     RecipeTag, RecipeIngredient, RecipeFavorite)
+from .models import (Ingredient, Tag, Recipe, RecipeTag,
+                     RecipeIngredient, RecipeFavorite, ShoppingCart)
 
 
 class RecipeIngredientGetSerializer(serializers.ModelSerializer):
@@ -167,3 +167,14 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return RecipeFavoriteSerializer(instance.favorite_recipe).data
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+    """Добавление пользователем рецепта в список покупок."""
+
+    class Meta:
+        model = ShoppingCart
+        fields = ('user', 'recipe_buy',)
+
+    def to_representation(self, instance):
+        return RecipeFavoriteSerializer(instance.recipe_buy).data
