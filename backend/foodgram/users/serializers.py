@@ -47,9 +47,9 @@ class RecipeSerializer(serializers.ModelSerializer):
 class SubscriptionsSerializer(serializers.ModelSerializer):
     """Получение подписок пользователя."""
 
-    is_subscribed = serializers.SerializerMethodField(read_only=True)
     recipes = serializers.SerializerMethodField(read_only=True)
     recipes_count = serializers.SerializerMethodField(read_only=True)
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -66,11 +66,10 @@ class SubscriptionsSerializer(serializers.ModelSerializer):
             user=request.user, author=obj).exists()
 
     def get_recipes(self, obj):
-        request = self.context.get('request')
         recipes = Recipe.objects.filter(author=obj)
-        return RecipeSerializer(
-            recipes, many=True, context={'request': request}
-        ).data
+        if not recipes:
+            return False
+        return RecipeSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj).count()
@@ -84,4 +83,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
         fields = ('user', 'author',)
 
     def to_representation(self, instance):
-        return SubscriptionsSerializer(instance.author).data
+        return SubscriptionsSerializer(
+            instance.author,
+            context={'request': self.context.get('request')}
+        ).data

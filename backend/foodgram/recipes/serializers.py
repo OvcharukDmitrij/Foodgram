@@ -86,6 +86,9 @@ class RecipeGetSerializer(serializers.ModelSerializer):
 
         request = self.context.get('request')
 
+        if request is None or request.user.is_anonymous:
+            return False
+
         return RecipeFavorite.objects.filter(
             favorite_recipe=obj, user=request.user
         ).exists()
@@ -93,6 +96,9 @@ class RecipeGetSerializer(serializers.ModelSerializer):
     def get_is_in_shopping_cart(self, obj):
 
         request = self.context.get('request')
+
+        if request is None or request.user.is_anonymous:
+            return False
 
         return ShoppingCart.objects.filter(
             recipe_buy=obj, user=request.user
@@ -128,9 +134,7 @@ class RecipePostPatchDelSerializer(serializers.ModelSerializer):
         recipe = Recipe.objects.create(author=author, **validated_data)
 
         for ingredient in ingredients:
-            current_ingredient, status = Ingredient.objects.get_or_create(
-                id=ingredient['id']
-            )
+            current_ingredient = Ingredient.objects.get(id=ingredient['id'])
             RecipeIngredient.objects.create(
                 ingredient=current_ingredient,
                 recipe=recipe,
@@ -155,9 +159,7 @@ class RecipePostPatchDelSerializer(serializers.ModelSerializer):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('recipeingredient')
         for ingredient in ingredients:
-            current_ingredient, status = Ingredient.objects.get_or_create(
-                id=ingredient['id']
-            )
+            current_ingredient = Ingredient.objects.get(id=ingredient['id'])
             RecipeIngredient.objects.create(
                 ingredient=current_ingredient,
                 recipe=instance,

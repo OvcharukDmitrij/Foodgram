@@ -1,27 +1,27 @@
-from djoser.views import UserViewSet
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import User, Subscription
-from .serializers import (CustomUserSerializer, SubscriptionsSerializer,
-                          SubscribeSerializer)
+from .serializers import SubscribeSerializer, SubscriptionsSerializer
 
 
-class CustomUserViewSet(UserViewSet):
-    """Получение списка пользователей, конкретного пользователя
-    и регистрация пользователя."""
-
-    queryset = User.objects.all()
-    serializer_class = CustomUserSerializer
+class SubscriptionsView(APIView):
+    """Получение списка подписок пользователя на авторов."""
 
 
-class SubscriptionsViewSet(viewsets.ModelViewSet):
-    """Получение перечня подписок пользователя на авторов."""
+    def get(self, request):
+        user = request.user
+        authors = User.objects.filter(subscribing__user=user)
+        serializer = SubscriptionsSerializer(
+            authors,
+            many=True,
+            context={'request': request}
+        )
 
-    queryset = User.objects.all()
-    serializer_class = SubscriptionsSerializer
+        return Response(serializer.data)
 
 
 class SubscribeView(APIView):
@@ -34,12 +34,15 @@ class SubscribeView(APIView):
             'user': user.id
         }
 
-        if id == user:
+        if id == user.id:
             raise ValidationError('Нельзя подписаться на себя!')
         if Subscription.objects.filter(author=id, user=user).exists():
             raise ValidationError('Вы уже подписаны на этого автора!')
 
-        serializer = SubscribeSerializer(data=data)
+        serializer = SubscribeSerializer(
+            data=data,
+            context={'request': request}
+        )
 
         if serializer.is_valid():
             serializer.save()
@@ -58,5 +61,3 @@ class SubscribeView(APIView):
         subscribe.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-

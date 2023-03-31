@@ -5,7 +5,7 @@ from rest_framework import filters, status
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import (IsAuthenticated, IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -14,12 +14,16 @@ from .models import (Ingredient, Tag, Recipe, RecipeFavorite,
 from .serializers import (IngredientSerializer, TagSerializer,
                           RecipeGetSerializer, RecipePostPatchDelSerializer,
                           FavoriteSerializer, ShoppingCartSerializer)
-
+from .permissions import AuthorOrAdmin
 
 class RecipesViewSet(viewsets.ModelViewSet):
     """Рецепты."""
 
     queryset = Recipe.objects.all()
+    permission_classes = (AuthorOrAdmin,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('tags',)
+    ordering_fields = ('-pub_date',)
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'retrieve':
@@ -27,11 +31,15 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
         return RecipePostPatchDelSerializer
 
+    def get_permissions(self):
+        if self.action == 'retrieve' or self.action == 'list':
+            return AllowAny(),
+        return super().get_permissions()
+
     @action(
         detail=False,
         methods=['get'],
         serializer_class=RecipeGetSerializer,
-        permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
         """Загрузка списка покупок."""
@@ -67,6 +75,8 @@ class TagsViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
+    permission_classes = (AllowAny,)
+
 
 
 class IngredientsViewSet(viewsets.ModelViewSet):
@@ -75,6 +85,7 @@ class IngredientsViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    permission_classes = (AllowAny,)
     pagination_class = None
     #    filterset_fields = ('color', 'birth_year')
     search_fields = ('^name',)

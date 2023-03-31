@@ -96,6 +96,10 @@ class Recipe(models.Model):
         validators=[MinValueValidator(1)],
         help_text='укажите время приготовления блюда'
     )
+    pub_date = models.DateTimeField(
+        'Время публикации',
+        auto_now_add=True
+    )
 
     def __repr__(self):
         return self.name
