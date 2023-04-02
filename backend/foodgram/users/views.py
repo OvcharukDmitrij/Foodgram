@@ -1,27 +1,30 @@
-from rest_framework import status, viewsets
+from rest_framework import status
 from rest_framework.exceptions import ValidationError
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from recipes.permissions import AuthorOrAdmin
 from .models import User, Subscription
 from .serializers import SubscribeSerializer, SubscriptionsSerializer
 
 
-class SubscriptionsView(APIView):
+class SubscriptionsView(ListAPIView):
     """Получение списка подписок пользователя на авторов."""
 
+    permission_classes = (AuthorOrAdmin,)
 
     def get(self, request):
         user = request.user
         authors = User.objects.filter(subscribing__user=user)
+        object = self.paginate_queryset(authors)
         serializer = SubscriptionsSerializer(
-            authors,
+            object,
             many=True,
             context={'request': request}
         )
 
-        return Response(serializer.data)
+        return self.get_paginated_response(serializer.data)
 
 
 class SubscribeView(APIView):
@@ -44,12 +47,10 @@ class SubscribeView(APIView):
             context={'request': request}
         )
 
-        if serializer.is_valid():
-            serializer.save()
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, id):
         user = request.user

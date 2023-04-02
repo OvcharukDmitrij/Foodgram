@@ -5,6 +5,7 @@ from .models import Subscription, User
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
+
     list_display = (
         'pk',
         'username',
@@ -12,17 +13,13 @@ class UserAdmin(admin.ModelAdmin):
         'last_name',
         'email',
         'is_staff',
-        )
+    )
     search_fields = ('username',)
-    list_filter = ('email', 'first_name')
+    list_filter = ('email', 'username',)
     empty_value_display = '-пусто-'
+
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = (
-        'pk',
-        'user',
-        'author',
-    )
 
-
+    list_display = ('pk', 'user', 'author',)

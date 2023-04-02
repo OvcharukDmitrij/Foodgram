@@ -23,7 +23,7 @@ class Ingredient(models.Model):
         verbose_name = "Ингредиент"
         verbose_name_plural = "Ингредиенты"
 
-    def __repr__(self):
+    def __str__(self):
         return self.name
 
 
@@ -53,7 +53,7 @@ class Tag(models.Model):
         verbose_name = "Тег"
         verbose_name_plural = "Теги"
 
-    def __repr__(self):
+    def __str__(self):
         return self.name
 
 
@@ -101,7 +101,7 @@ class Recipe(models.Model):
         auto_now_add=True
     )
 
-    def __repr__(self):
+    def __str__(self):
         return self.name
 
     class Meta:
@@ -130,18 +130,36 @@ class RecipeIngredient(models.Model):
         verbose_name='количество'
     )
 
-    def __repr__(self):
+    def __str__(self):
         return f'{self.recipe} {self.ingredient}'
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = "Рецепты-Ингредиенты"
+        verbose_name_plural = "Рецепты-Ингредиенты"
 
 
 class RecipeTag(models.Model):
     """Модель многие-ко-многим Рецепты-Теги."""
 
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name='рецепт',
+    )
+    tag = models.ForeignKey(
+        Tag,
+        on_delete=models.CASCADE,
+        verbose_name='тег',
+    )
 
-    def __repr__(self):
+    def __str__(self):
         return f'{self.recipe} {self.tag}'
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = "Рецепты-Теги"
+        verbose_name_plural = "Рецепты-Теги"
 
 
 class RecipeFavorite(models.Model):
@@ -157,11 +175,16 @@ class RecipeFavorite(models.Model):
         Recipe,
         on_delete=models.CASCADE,
         related_name='favorite',
-        verbose_name='рецепт для добавление в избранное'
+        verbose_name='избранный рецепт'
     )
 
-    def __repr__(self):
+    def __str__(self):
         return f'{self.user} {self.favorite_recipe}'
+
+    class Meta:
+        ordering = ['user']
+        verbose_name = "Избранный рецепт"
+        verbose_name_plural = "Избранные рецепты"
 
 
 class ShoppingCart(models.Model):
@@ -179,4 +202,9 @@ class ShoppingCart(models.Model):
         related_name='shopping_cart',
         verbose_name='рецепт для покупки ингредиентов'
     )
+
+    class Meta:
+        ordering = ['user']
+        verbose_name = "Список покупок"
+        verbose_name_plural = "Списки покупок"
 

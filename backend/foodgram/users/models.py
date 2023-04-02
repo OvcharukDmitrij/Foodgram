@@ -27,7 +27,7 @@ class User(AbstractUser):
         verbose_name = 'Пользователи'
         verbose_name_plural = 'Пользователи'
 
-    def __repr__(self):
+    def __str__(self):
         return self.username
 
 
