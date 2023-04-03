@@ -9,7 +9,7 @@ class Ingredient(models.Model):
     name = models.CharField(
         'название',
         max_length=200,
-        help_text ='введите название ингредиента',
+        help_text='введите название ингредиента',
     )
 
     measurement_unit = models.CharField(
@@ -33,7 +33,7 @@ class Tag(models.Model):
     name = models.CharField(
         'тэг',
         max_length=200,
-        help_text ='введите тэг',
+        help_text='введите тэг',
         unique=True,
     )
     color = models.CharField(
@@ -207,4 +207,3 @@ class ShoppingCart(models.Model):
         ordering = ['user']
         verbose_name = "Список покупок"
         verbose_name_plural = "Списки покупок"
-

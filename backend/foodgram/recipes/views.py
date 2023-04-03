@@ -1,28 +1,29 @@
 from django.db.models import Sum
 from django.http import HttpResponse
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status
-from rest_framework import viewsets
+from django_filters import rest_framework as f
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import (Ingredient, Tag, Recipe, RecipeFavorite,
-                     ShoppingCart, RecipeIngredient)
-from .serializers import (IngredientSerializer, TagSerializer,
-                          RecipeGetSerializer, RecipePostPatchDelSerializer,
-                          FavoriteSerializer, ShoppingCartSerializer)
+from .filters import RecipeFilter
+from .models import (Ingredient, Recipe, RecipeFavorite, RecipeIngredient,
+                     ShoppingCart, Tag)
 from .permissions import AuthorOrAdmin
+from .serializers import (FavoriteSerializer, IngredientSerializer,
+                          RecipeGetSerializer, RecipePostPatchDelSerializer,
+                          ShoppingCartSerializer, TagSerializer)
+
 
 class RecipesViewSet(viewsets.ModelViewSet):
     """Рецепты."""
 
     queryset = Recipe.objects.all()
     permission_classes = (AuthorOrAdmin,)
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('tags',)
+    filter_backends = (f.DjangoFilterBackend,)
+    filterset_class = RecipeFilter
     ordering_fields = ('-pub_date',)
 
     def get_serializer_class(self):
@@ -45,7 +46,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         """Загрузка списка покупок."""
 
         user = request.user
-        ingredient_list = "Cписок покупок: "
+        ingredient_list = "Ингредиенты для покупки: "
 
         ingredients = RecipeIngredient.objects.filter(
             recipe__shopping_cart__user=user).values(
@@ -78,16 +79,14 @@ class TagsViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
 
 
-
 class IngredientsViewSet(viewsets.ModelViewSet):
     """Ингредиенты."""
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filter_backends = (filters.SearchFilter,)
     permission_classes = (AllowAny,)
     pagination_class = None
-    #    filterset_fields = ('color', 'birth_year')
     search_fields = ('^name',)
 
 
