@@ -136,7 +136,7 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend'
     ],
     'DEFAULT_PAGINATION_CLASS': 'recipes.pagination.CustomPagination',
-    'PAGE_SIZE': 2,
+    'PAGE_SIZE': 4,
     'SEARCH_PARAM': 'name'
 }
 
