@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .filters import RecipeFilter
-from .models import (Ingredient, Recipe, RecipeFavorite, RecipeIngredient,
+from .models import (Ingredient, RecipeFavorite, RecipeIngredient,
                      ShoppingCart, Tag)
 from .permissions import AuthorOrAdmin
 from .serializers import (FavoriteSerializer, IngredientSerializer,
