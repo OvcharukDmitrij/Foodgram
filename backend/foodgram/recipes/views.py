@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .filters import RecipeFilter
-from .models import (Ingredient, RecipeFavorite, RecipeIngredient,
+from .models import (Ingredient, Recipe, RecipeFavorite, RecipeIngredient,
                      ShoppingCart, Tag)
 from .permissions import AuthorOrAdmin
 from .serializers import (FavoriteSerializer, IngredientSerializer,
@@ -20,7 +20,7 @@ from .serializers import (FavoriteSerializer, IngredientSerializer,
 class RecipesViewSet(viewsets.ModelViewSet):
     """Рецепты."""
 
-    # queryset = Recipe.objects.all()
+    queryset = Recipe.objects.all()
     permission_classes = (AuthorOrAdmin,)
     filter_backends = (f.DjangoFilterBackend,)
     filterset_class = RecipeFilter
