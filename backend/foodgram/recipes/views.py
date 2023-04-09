@@ -48,7 +48,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
         ingredients = RecipeIngredient.objects.filter(
             recipe__shopping_cart__user=request.user).values(
-            'ingredient__name', 'ingredient__measurement_unit').annotate(amount=Sum('amount'))
+            'ingredient__name', 'ingredient__measurement_unit').annotate(
+            amount=Sum('amount')
+        )
 
         for ingredient in ingredients:
             ingredient_list += (
