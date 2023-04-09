@@ -24,7 +24,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
     permission_classes = (AuthorOrAdmin,)
     filter_backends = (f.DjangoFilterBackend,)
     filterset_class = RecipeFilter
-    ordering_fields = ('-pub_date',)
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'retrieve':
@@ -45,29 +44,19 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         """Загрузка списка покупок."""
 
-        user = request.user
         ingredient_list = "Ингредиенты для покупки: "
 
         ingredients = RecipeIngredient.objects.filter(
-            recipe__shopping_cart__user=user).values(
-            'ingredient__name', 'ingredient__measurement_unit').annotate(
-            amount=Sum('amount'))
+            recipe__shopping_cart__user=request.user).values(
+            'ingredient__name', 'ingredient__measurement_unit').annotate(amount=Sum('amount'))
 
-        for num, i in enumerate(ingredients):
+        for ingredient in ingredients:
             ingredient_list += (
-                f"\n{i['ingredient__name']} - {i['amount']} "
-                f"{i['ingredient__measurement_unit']}"
-            )
-            if num < ingredients.count() - 1:
-                ingredient_list += ', '
+                f"\n{ingredient['ingredient__name']}"
+                f"({ingredient['ingredient__measurement_unit']}) - "
+                f"{ingredient['amount']}")
 
-        response = HttpResponse(
-            ingredient_list, 'Content-Type: application/pdf'
-        )
-        response['Content-Disposition'] = (
-            'attachment; filename="shopping_list.pdf'
-        )
-        return response
+        return HttpResponse(ingredient_list, content_type='application')
 
 
 class TagsViewSet(viewsets.ModelViewSet):

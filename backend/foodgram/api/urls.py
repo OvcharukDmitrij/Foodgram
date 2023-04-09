@@ -6,9 +6,9 @@ from users.views import SubscribeView, SubscriptionsView
 
 router_v1 = DefaultRouter()
 
-router_v1.register(r'recipes', RecipesViewSet, basename='recipes')
-router_v1.register(r'tags', TagsViewSet, basename='tags')
-router_v1.register(r'ingredients', IngredientsViewSet, basename='ingredients')
+router_v1.register(r'recipes', RecipesViewSet)
+router_v1.register(r'tags', TagsViewSet)
+router_v1.register(r'ingredients', IngredientsViewSet)
 
 urlpatterns = [
     path('users/subscriptions/', SubscriptionsView.as_view()),

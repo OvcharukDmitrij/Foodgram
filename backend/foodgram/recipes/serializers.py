@@ -168,6 +168,8 @@ class RecipePostPatchDelSerializer(serializers.ModelSerializer):
         for tag in tags:
             RecipeTag.objects.create(tag=tag, recipe=instance)
 
+        instance.save()
+
         return instance
 
     def to_representation(self, instance):
