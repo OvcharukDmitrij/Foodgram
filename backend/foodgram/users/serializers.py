@@ -67,7 +67,7 @@ class SubscriptionsSerializer(serializers.ModelSerializer):
             user=request.user, author=obj).exists()
 
     def get_recipes(self, obj):
-        recipes = Recipe.objects.filter(author=obj)[:2]
+        recipes = Recipe.objects.filter(author=obj)[:3]
         if not recipes:
             return False
         return RecipeSerializer(recipes, many=True).data
